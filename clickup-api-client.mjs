@@ -110,6 +110,13 @@ export class ClickUpClient {
   getSpaceLists(spaceId, { archived = false } = {}) {
     return this.request(`/space/${spaceId}/list`, { query: { archived } });
   }
+  getSpaceTags(spaceId) { return this.request(`/space/${spaceId}/tag`); }
+  async createSpaceTag(spaceId, tag) {
+    await this.request(`/space/${spaceId}/tag`, { method: "POST", body: { tag } });
+    // ClickUp may return an empty response for this endpoint; return the saved tag consistently.
+    const tags = (await this.getSpaceTags(spaceId)).tags || [];
+    return tags.find((item) => item.name === tag.name) || { ...tag };
+  }
   getList(listId) { return this.request(`/list/${listId}`); }
   getTask(taskId, { includeSubtasks = false } = {}) {
     return this.request(`/task/${taskId}`, { query: { subtasks: includeSubtasks } });
@@ -179,6 +186,12 @@ export class ClickUpClient {
     return this.createTask(listId, { ...task, parent: String(parentTaskId) });
   }
   updateTask(taskId, changes) { return this.request(`/task/${taskId}`, { method: "PUT", body: changes }); }
+  addTagToTask(taskId, tagName) {
+    return this.request(`/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { method: "POST" });
+  }
+  removeTagFromTask(taskId, tagName) {
+    return this.request(`/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { method: "DELETE" });
+  }
 
   async createSubtasks(listId, parentTaskId, tasks, { concurrency = DEFAULT_CONCURRENCY } = {}) {
     if (!Array.isArray(tasks)) throw new TypeError("tasks must be an array of task payloads");
@@ -209,3 +222,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   else if (command === "workspaces") console.log(JSON.stringify(await client.getWorkspaces(), null, 2));
   else console.error("Usage: node clickup-api-client.mjs workspaces | hierarchy <workspace-id>");
 }
+

@@ -14,6 +14,8 @@
 | Criar task | `createTask()` | `POST /list/{list_id}/task` |
 | Criar subtask | `createSubtask()` / `createSubtasks()` | Mesmo `POST`, enviando `parent` |
 | Atualizar task | `updateTask()` | `PUT /task/{task_id}` |
+| Consultar/criar tags do Space | `getSpaceTags()`, `createSpaceTag()` | `GET` / `POST /space/{space_id}/tag` |
+| Associar/remover tag de uma task | `addTagToTask()`, `removeTagFromTask()` | `POST` / `DELETE /task/{task_id}/tag/{tag_name}` |
 
 Na API v2, o campo/rota `team` equivale ao que a interface chama de **Workspace**. A página de tarefas inclui subtasks quando `subtasks=true`; a criação de uma subtask é a criação normal de task com o ID do pai em `parent`.
 
@@ -67,6 +69,19 @@ await client.createSubtasks(sprint0.id, documentation.id, [
 
 await client.updateTask(documentation.id, { status: "in progress" });
 ```
+
+Para criar uma tag no Space da lista e aplicá-la a uma task:
+
+```js
+const tag = await client.createSpaceTag(sprint0.space.id, {
+  name: "documentação",
+  tag_bg: "#DDEBFF",
+  tag_fg: "#1E4FA1",
+});
+await client.addTagToTask(documentation.id, tag.name);
+```
+
+`createSpaceTag()` cria a tag para todo o Space. Antes de criar, use `getSpaceTags(spaceId)` para evitar nomes duplicados.
 
 `createSubtasks()` mantém a ordem dos resultados e, por padrão, envia uma requisição por vez. Aumente `CLICKUP_CONCURRENCY` apenas se o plano e a margem de quota comportarem isso.
 
